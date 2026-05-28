@@ -29,9 +29,14 @@ const app = express()
 const PORT = process.env.PORT || 3001
 
 // Security & performance middleware
+app.set('etag', false)
 app.use(compression())
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 app.use(mongoSanitize())
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  next()
+})
 
 // Middleware
 const allowedOrigins = [

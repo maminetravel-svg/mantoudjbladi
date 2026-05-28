@@ -15,7 +15,12 @@ import agentManagementRoutes from './routes/agentManagement'
 
 const app = express()
 
+app.set('etag', false)
 app.use(compression())
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  next()
+})
 
 const allowedOrigins = [
   'https://mantoudj.rflydz.com',
