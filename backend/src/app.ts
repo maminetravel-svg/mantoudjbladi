@@ -24,6 +24,9 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
   'http://localhost:5173',
+  'http://localhost',
+  'https://localhost',
+  'capacitor://localhost',
 ].filter(Boolean) as string[]
 app.use(cors({
   origin: (origin, callback) => {
