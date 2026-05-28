@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  agent
+  buyer
+  farmer
+}
+
+enum CropStage {
+  seeds
+  growth
+  flowering
+  ready
+}
+
+enum CropType {
+  tomato
+  potato
+  citrus
+  watermelon
+  pepper
+  onion
+  wheat
+  olive
+  carrot
+  garlic
+  eggplant
+  zucchini
+  cucumber
+  lettuce
+  fig
+  grape
+  apricot
+  peach
+  apple
+  dates
+  corn
+  barley
+  pumpkin
+  beans
+  lentils
+  chickpeas
+  sunflower
+  strawberry
+}
+
+enum MarketTarget {
+  local   @map("محلي")
+  export  @map("تصدير")
+}
+
+enum InspectionStatus {
+  pending
+  confirmed
+  done
+}
+
+enum PreOrderStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum LandGoal {
+  sale   @map("بيع")
+  rent   @map("إيجار")
+}
+
+enum PriceType {
+  fixed        @map("ثابت")
+  negotiable   @map("قابل للتفاوض")
+  offer        @map("عرض")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  name        String
+  firstName   String?
+  lastName    String?
+  phone       String    @unique
+  password    String
+  role        UserRole
+  wilaya      String
+  commune     String?
+  gpsLat      Float?
+  gpsLng      Float?
+  trustScore  Float     @default(0)
+  dealsCount  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  farmerProfile   Farmer?         @relation("FarmerAgent")
+  addedFarmers    Farmer[]        @relation("AddedByAgent")
+  crops           Crop[]          @relation("AgentCrops")
+  equipment       Equipment[]
+  lands           Land[]
+  inspections     InspectionRequest[]
+  preOrders       PreOrder[]
+  reviews         FarmerReview[]
+}
+
+model Farmer {
+  id              String    @id @default(uuid())
+  name            String
+  phone           String
+  wilaya          String
+  commune         String?
+  gpsLat          Float     @default(0)
+  gpsLng          Float     @default(0)
+  trustScore      Float     @default(0)
+  dealsCompleted  Int       @default(0)
+  specialization  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // The agent who added this farmer
+  agentId   String
+  agent     User     @relation("AddedByAgent", fields: [agentId], references: [id])
+
+  // If the farmer has a user account
+  userId    String?  @unique
+  user      User?    @relation("FarmerAgent", fields: [userId], references: [id])
+
+  // Relations
+  crops    Crop[]
+  reviews  FarmerReview[]
+}
+
+model FarmerReview {
+  id         String   @id @default(uuid())
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now())
+
+  farmerId   String
+  farmer     Farmer  @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  buyerId    String
+  buyer      User    @relation(fields: [buyerId], references: [id])
+  buyerName  String
+}
+
+model Crop {
+  id                    String      @id @default(uuid())
+  type                  CropType
+  plantingDate          String
+  expectedHarvestDate   String?
+  estimatedQuantityKg   Int
+  stage                 CropStage   @default(seeds)
+  images                String[]    @default([])
+  videos                String[]    @default([])
+  coverMediaType        String      @default("image")
+  gpsLat                Float       @default(0)
+  gpsLng                Float       @default(0)
+  wilaya                String
+  pricePerKg            Float?
+  description           String?
+  marketTarget          String?
+  isOfflinePending      Boolean     @default(false)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  farmerId   String
+  farmer     Farmer  @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  agentId    String
+  agent      User    @relation("AgentCrops", fields: [agentId], references: [id])
+
+  inspectionRequests  InspectionRequest[]
+  preOrders           PreOrder[]
+}
+
+model InspectionRequest {
+  id           String            @id @default(uuid())
+  buyerName    String
+  status       InspectionStatus  @default(pending)
+  requestedAt  DateTime          @default(now())
+
+  cropId   String
+  crop     Crop   @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  buyerId  String
+  buyer    User   @relation(fields: [buyerId], references: [id])
+}
+
+model PreOrder {
+  id          String          @id @default(uuid())
+  buyerName   String
+  quantityKg  Int
+  pricePerKg  Float
+  status      PreOrderStatus  @default(pending)
+  createdAt   DateTime        @default(now())
+
+  cropId   String
+  crop     Crop   @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  buyerId  String
+  buyer    User   @relation(fields: [buyerId], references: [id])
+}
+
+model Equipment {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  description String?
+  pricePerDay Float?
+  wilaya      String
+  phone       String
+  images      String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agentId  String
+  agent    User   @relation(fields: [agentId], references: [id])
+}
+
+model Land {
+  id          String    @id @default(uuid())
+  area        Float
+  wilaya      String
+  commune     String?
+  gpsLat      Float     @default(0)
+  gpsLng      Float     @default(0)
+  goal        String
+  priceType   String
+  price       Float?
+  description String?
+  documents   String[]  @default([])
+  features    String[]  @default([])
+  images      String[]  @default([])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  agentId  String
+  agent    User   @relation(fields: [agentId], references: [id])
+}

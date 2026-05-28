@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.mantoudjbladi.app",
+        "sha256_cert_fingerprints": ["C6:37:A1:9D:D7:B5:AD:FD:20:FD:F4:0D:88:FD:71:8F:37:31:3E:1B:74:65:6D:DD:DD:B0:6D:9A:D8:21:6F:86"]
+      }
+    }]

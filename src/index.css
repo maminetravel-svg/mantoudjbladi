@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fanIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.8); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)      scale(1);   }
+}
+
+/* RTL support */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  direction: rtl;
+  font-family: 'Segoe UI', Tahoma, Arial, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0fdf4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Mobile-first: prevent overscroll */
+  overscroll-behavior: none;
+}
+
+/* Arabic text improvements */
+p, span, div, h1, h2, h3, h4, h5, h6, label, button, input, select, textarea {
+  font-family: 'Segoe UI', Tahoma, Arial, 'Helvetica Neue', sans-serif;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Input RTL */
+input, select, textarea {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Number inputs should be LTR */
+input[type="number"],
+input[type="tel"] {
+  direction: ltr;
+  text-align: right;
+}
+
+/* Date input */
+input[type="date"] {
+  direction: ltr;
+  text-align: center;
+}
+
+/* Remove default browser outline */
+*:focus {
+  outline: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0fdf4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #22c55e;
+  border-radius: 2px;
+}
+
+/* Leaflet fix */
+.leaflet-container {
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+  z-index: 0;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px !important;
+  direction: rtl;
+}
+
+/* Safe area for mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Full height app */
+#root {
+  min-height: 100vh;
+  background-color: #f0fdf4;
+}
+
+/* Mobile viewport fix */
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
