@@ -33,7 +33,7 @@ export const loginLimiter = rateLimit({
 // OTP / forgot password — أكثر تقييداً
 export const otpLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: { error: 'تجاوزت الحد المسموح لطلبات OTP، حاول بعد ساعة' },
   keyGenerator: getClientKey,
   standardHeaders: true,
