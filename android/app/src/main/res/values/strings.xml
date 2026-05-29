@@ -4,4 +4,5 @@
     <string name="title_activity_main">منتوج فلاح بلادي</string>
     <string name="package_name">dz.mantoudj.fellahbladi</string>
     <string name="custom_url_scheme">dz.mantoudj.fellahbladi</string>
+    <string name="server_client_id">304971212581-iu0u5jperspddcv9b6bcfp99ops2unqc.apps.googleusercontent.com</string>
 </resources>

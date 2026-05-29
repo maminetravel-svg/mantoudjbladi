@@ -11,6 +11,13 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     backgroundColor: '#1B4332',
   },
+  plugins: {
+    GoogleAuth: {
+      scopes: ['profile', 'email'],
+      clientId: '304971212581-iu0u5jperspddcv9b6bcfp99ops2unqc.apps.googleusercontent.com',
+      forceCodeForRefreshToken: true,
+    },
+  },
 };
 
 export default config;
