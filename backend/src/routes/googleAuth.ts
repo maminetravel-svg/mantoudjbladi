@@ -73,27 +73,40 @@ router.post('/google', async (req: Request, res: Response) => {
 
     // إنشاء حساب جديد
     const mbId = await generateMbId(wilaya)
-    user = await User.create({
-      name: customName || name,
-      phone: phone || `google_${googleId}`,
-      password: `google_oauth_${googleId}`, // لن يُستخدم للدخول
-      wilaya,
-      commune: commune || '',
-      role,
-      googleId,
-      email,
-      mbId,
-      isActive: true,
-    })
-
-    if (role === 'farmer') {
-      await Farmer.create({
-        name,
-        phone: email || `google_${googleId}`,
+    try {
+      user = await User.create({
+        name: customName || name,
+        phone: phone || `google_${googleId}`,
+        password: `google_oauth_${googleId}`, // لن يُستخدم للدخول
         wilaya,
-        agentId: user._id.toString(),
-        userId: user._id.toString(),
+        commune: commune || '',
+        role,
+        googleId,
+        email,
+        mbId,
+        isActive: true,
       })
+
+      if (role === 'farmer') {
+        await Farmer.create({
+          name,
+          phone: email || `google_${googleId}`,
+          wilaya,
+          agentId: user._id.toString(),
+          userId: user._id.toString(),
+        })
+      }
+    } catch (createErr: any) {
+      if (createErr.code === 11000) {
+        const msg = createErr.message || '';
+        if (msg.includes('phone')) {
+          return res.status(409).json({ error: 'رقم الهاتف هذا مسجل مسبقاً بحساب آخر' })
+        }
+        if (msg.includes('email')) {
+          return res.status(409).json({ error: 'البريد الإلكتروني هذا مسجل مسبقاً بحساب آخر' })
+        }
+      }
+      throw createErr
     }
 
     const token = makeToken(user._id.toString(), user.role)
