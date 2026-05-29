@@ -30,7 +30,7 @@ router.post('/send-register-otp', otpLimiter, async (req: Request, res: Response
     await Otp.findOneAndReplace({ phone }, { phone, hash, expiry }, { upsert: true })
 
     try {
-      const intlPhone = phone.startsWith('+') ? phone : `+213${phone.replace(/^0/, '')}`
+      const intlPhone = formatAlgerianPhone(phone)
       await sendOtpSms(intlPhone, otp)
     } catch (smsErr) {
       console.error('[Register OTP SMS Error]', smsErr)
@@ -140,7 +140,7 @@ router.post('/forgot-password', otpLimiter, async (req: Request, res: Response) 
 
     // إرسال OTP عبر SMS (Twilio)
     try {
-      const intlPhone = phone.startsWith('+') ? phone : `+213${phone.replace(/^0/, '')}`
+      const intlPhone = formatAlgerianPhone(phone)
       await sendOtpSms(intlPhone, otp)
     } catch (smsErr) {
       console.error('[SMS OTP Error]', smsErr)
@@ -200,5 +200,16 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'خطأ في الخادم' })
   }
 })
+
+export function formatAlgerianPhone(phone: string): string {
+  let cleaned = phone.replace(/\D/g, '')
+  if (cleaned.startsWith('213')) {
+    cleaned = cleaned.substring(3)
+  }
+  if (cleaned.startsWith('0')) {
+    cleaned = cleaned.substring(1)
+  }
+  return `+213${cleaned}`
+}
 
 export default router

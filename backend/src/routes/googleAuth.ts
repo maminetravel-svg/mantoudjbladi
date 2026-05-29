@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { User } from '../models/User'
 import { generateMbId } from '../utils/mbId'
 import { Farmer } from '../models/Farmer'
+import { formatAlgerianPhone } from './auth'
 
 const router = Router()
 
@@ -74,9 +75,10 @@ router.post('/google', async (req: Request, res: Response) => {
     // إنشاء حساب جديد
     const mbId = await generateMbId(wilaya)
     try {
+      const formattedPhone = phone ? formatAlgerianPhone(phone) : `google_${googleId}`
       user = await User.create({
         name: customName || name,
-        phone: phone || `google_${googleId}`,
+        phone: formattedPhone,
         password: `google_oauth_${googleId}`, // لن يُستخدم للدخول
         wilaya,
         commune: commune || '',
@@ -90,7 +92,7 @@ router.post('/google', async (req: Request, res: Response) => {
       if (role === 'farmer') {
         await Farmer.create({
           name,
-          phone: email || `google_${googleId}`,
+          phone: formattedPhone,
           wilaya,
           agentId: user._id.toString(),
           userId: user._id.toString(),
