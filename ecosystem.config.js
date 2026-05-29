@@ -14,8 +14,8 @@ module.exports = {
         PORT: 3001,
         JWT_SECRET: 'rflydz2026_super_secure_key_mantoudj_bladi',
         MONGODB_URI: 'mongodb://localhost:27017/mantoudj_bladi',
-        FRONTEND_URL: 'https://mantoudj.rflydz.com',
-        API_URL: 'https://mantoudj.rflydz.com'
+        FRONTEND_URL: 'https://mantoudjfellahbladi.com',
+        API_URL: 'https://mantoudjfellahbladi.com'
       },
       error_file: '/var/log/mantoudj/error.log',
       out_file: '/var/log/mantoudj/out.log',
