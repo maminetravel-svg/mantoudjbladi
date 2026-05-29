@@ -12,7 +12,20 @@
           "package_name": "dz.mantoudj.fellahbladi"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "242283208162-iktk2rankdidn81u0ai4gtmvbfvp26ib.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dz.mantoudj.fellahbladi",
+            "certificate_hash": "65b40f55fe72cfb93d40e246937f274afa7c59b8"
+          }
+        },
+        {
+          "client_id": "242283208162-aed2aic87cjkt54l1k2dlanh9jmkv7mh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDvPNrrkYnlr0q9_rkW9kHdftsGeoIoWD0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "242283208162-aed2aic87cjkt54l1k2dlanh9jmkv7mh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
