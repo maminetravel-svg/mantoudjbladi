@@ -2,7 +2,8 @@ import { Router, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
 import { v4 as uuidv4 } from 'uuid'
-import { requireAuth, AuthRequest } from '../middleware/auth'
+import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth'
+import multer from 'multer'
 import {
   uploadImageRaw,
   uploadImagesRaw,
@@ -127,5 +128,46 @@ function getVideoDuration(filePath: string): Promise<number> {
     })
   })
 }
+
+// ── APK Upload configuration ──────────────────────────────
+const apkStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.join(__dirname, '..', '..', 'uploads', 'apks')
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    cb(null, dir)
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    cb(null, `${uuidv4()}${ext}`)
+  },
+})
+
+function apkFilter(_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  const ext = path.extname(file.originalname).toLowerCase()
+  if (ext === '.apk') cb(null, true)
+  else cb(new Error('يجب رفع ملف بصيغة APK فقط (.apk)'))
+}
+
+const uploadApk = multer({
+  storage: apkStorage,
+  fileFilter: apkFilter,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max limit
+}).single('apk')
+
+// POST /api/uploads/apk — رفع ملف APK جديد (للمشرفين فقط)
+router.post('/apk', requireAuth, requireAdmin, (req: AuthRequest, res: Response) => {
+  uploadApk(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'حجم ملف APK يتجاوز الحد المسموح به (100MB)' })
+      }
+      return res.status(400).json({ error: err.message })
+    }
+    if (!req.file) return res.status(400).json({ error: 'لم يتم رفع أي ملف' })
+
+    const url = fileUrl(req, 'apks', req.file.filename)
+    res.json({ url, filename: req.file.filename })
+  })
+})
 
 export default router

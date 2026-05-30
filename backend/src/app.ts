@@ -3,6 +3,10 @@ import cors from 'cors'
 import compression from 'compression'
 import path from 'path'
 import { Config } from './models/Config'
+import { Crop } from './models/Crop'
+import { Equipment } from './models/Equipment'
+import { Land } from './models/Land'
+import { Farmer } from './models/Farmer'
 
 import authRoutes from './routes/auth'
 import usersRoutes from './routes/users'
@@ -56,9 +60,39 @@ app.use('/api/agent-management', agentManagementRoutes)
 // Public config endpoint — no auth required
 app.get('/api/config/:type', async (req, res) => {
   try {
-    const doc = await Config.findOne({ configType: req.params.type })
+    let doc = await Config.findOne({ configType: req.params.type })
+    if (!doc && req.params.type === 'landing') {
+      doc = await Config.create({
+        configType: 'landing',
+        items: [
+          { key: 'heroTitle', labelAr: 'منصة منتوج بلادي الرقمية', emoji: '🌱', isActive: true, order: 0 },
+          { key: 'heroSubtitle', labelAr: 'التسويق يبدأ من يوم البذور. منصتكم الموثوقة لتسويق وتصفح المحاصيل الفلاحية والمعدات والأراضي الفلاحية في الجزائر.', emoji: '🚜', isActive: true, order: 1 },
+          { key: 'apkUrl', labelAr: '/apk/mantoudj-bladi.apk', emoji: '📱', isActive: true, order: 2 },
+          { key: 'showStats', labelAr: 'إظهار إحصائيات المنصة', emoji: '📊', isActive: true, order: 3 },
+          { key: 'contactPhone', labelAr: '0555000000', emoji: '📞', isActive: true, order: 4 },
+        ]
+      })
+    }
     res.json(doc ? doc.items : [])
   } catch { res.status(500).json({ error: 'خطأ في الخادم' }) }
+})
+
+// Public stats endpoint
+app.get('/api/public-stats', async (req, res) => {
+  try {
+    const [crops, equipment, lands, farmers] = await Promise.all([
+      Crop.countDocuments({ status: 'approved' }),
+      Equipment.countDocuments({ status: 'approved' }),
+      Land.countDocuments({ status: 'approved' }),
+      Farmer.countDocuments(),
+    ])
+    // Get unique wilayas
+    const uniqueWilayas = await Crop.distinct('wilaya', { status: 'approved' })
+    const wilayasCount = uniqueWilayas.length || 48
+    res.json({ crops, equipment, lands, farmers, wilayas: wilayasCount })
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ في الخادم' })
+  }
 })
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }))

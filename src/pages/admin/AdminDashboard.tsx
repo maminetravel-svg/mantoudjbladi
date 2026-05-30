@@ -20,7 +20,7 @@ import {
   apiAdminGetKnowledge, apiAdminVerifyKnowledge, apiAdminDeleteKnowledge,
   apiLoginAsUser,
 } from '../../api/admin'
-import { apiUploadImage, apiUploadImages, apiUploadVideo } from '../../api/uploads'
+import { apiUploadImage, apiUploadImages, apiUploadVideo, apiUploadApk } from '../../api/uploads'
 import { setToken, getToken } from '../../api/client'
 import { getRoleBadges } from '../../types/badges'
 import { CROP_LABELS, STAGE_LABELS } from '../../types'
@@ -29,13 +29,13 @@ import {
   Users, Leaf, Tractor, LogOut, Search,
   Trash2, Ban, CheckCircle, RefreshCw, Plus, X, Edit2, Eye, EyeOff,
   Shield, ChevronLeft, ChevronRight, Wrench, TrendingUp,
-  Menu, Package, LayoutGrid, Table2, MapPin, Scale, Video, UserPlus, BookOpen
+  Menu, Package, LayoutGrid, Table2, MapPin, Scale, Video, UserPlus, BookOpen, Globe
 } from 'lucide-react'
 
 const ROLE_LABEL: Record<string, string> = { farmer: 'فلاح', buyer: 'مشتري', agent: 'وسيط' }
 const ROLE_COLOR: Record<string, string> = { farmer: '#16a34a', buyer: '#2563eb', agent: '#7c3aed' }
 const STAGE_COLOR: Record<string, string> = { seeds: '#84cc16', growth: '#16a34a', flowering: '#22c55e', ready: '#dc2626' }
-type Tab = 'stats' | 'users' | 'crops' | 'farmers' | 'equipment' | 'lands' | 'cropTypes' | 'equipTypes' | 'cropDurations' | 'settings' | 'admins' | 'knowledge'
+type Tab = 'stats' | 'users' | 'crops' | 'farmers' | 'equipment' | 'lands' | 'cropTypes' | 'equipTypes' | 'cropDurations' | 'settings' | 'admins' | 'knowledge' | 'landing'
 
 const NAV = [
   { id: 'stats',         label: 'الإحصائيات',    icon: TrendingUp },
@@ -47,6 +47,7 @@ const NAV = [
   { id: 'cropTypes',     label: 'أنواع المحاصيل', icon: Package },
   { id: 'equipTypes',    label: 'أنواع المعدات',  icon: LayoutGrid },
   { id: 'cropDurations', label: 'أيام النضج',     icon: Scale },
+  { id: 'landing',       label: 'صفحة الهبوط',    icon: Globe },
   { id: 'admins',        label: 'المشرفون',        icon: UserPlus },
   { id: 'knowledge',     label: 'قاعدة المعرفة',  icon: BookOpen },
   { id: 'settings',      label: 'الإعدادات',      icon: Shield },
@@ -272,13 +273,53 @@ export default function AdminDashboard() {
   }, [tab])
 
   const loadConfig = useCallback(() => {
-    if (tab !== 'cropTypes' && tab !== 'equipTypes') return
+    if (tab !== 'cropTypes' && tab !== 'equipTypes' && tab !== 'landing') return
     setConfigLoading(true)
-    apiAdminGetConfig(configType)
+    const type = tab === 'landing' ? 'landing' : (tab === 'cropTypes' ? 'cropTypes' : 'equipmentTypes')
+    apiAdminGetConfig(type)
       .then(setConfigItems)
       .finally(() => setConfigLoading(false))
-  }, [tab, configType])
+  }, [tab])
   useEffect(() => { loadConfig() }, [tab])
+
+  // Landing Editor states & handler
+  const [landingForm, setLandingForm] = useState({ heroTitle: '', heroSubtitle: '', apkUrl: '', contactPhone: '', showStats: true })
+  const [saveLandingLoading, setSaveLandingLoading] = useState(false)
+  const [apkUploading, setApkUploading] = useState(false)
+
+  const getLandingVal = useCallback((key: string) => configItems.find(i => i.key === key)?.labelAr || '', [configItems])
+  const isLandingActive = useCallback((key: string) => configItems.find(i => i.key === key)?.isActive !== false, [configItems])
+
+  useEffect(() => {
+    if (tab === 'landing') {
+      setLandingForm({
+        heroTitle: getLandingVal('heroTitle') || 'منصة منتوج بلادي الرقمية',
+        heroSubtitle: getLandingVal('heroSubtitle') || 'التسويق يبدأ من يوم البذور. منصتكم الموثوقة لتسويق وتصفح المحاصيل الفلاحية والمعدات والأراضي الفلاحية في الجزائر.',
+        apkUrl: getLandingVal('apkUrl') || '/apk/mantoudj-bladi.apk',
+        contactPhone: getLandingVal('contactPhone') || '0555000000',
+        showStats: isLandingActive('showStats')
+      })
+    }
+  }, [configItems, tab, getLandingVal, isLandingActive])
+
+  const handleSaveLandingConfig = async () => {
+    setSaveLandingLoading(true)
+    try {
+      await Promise.all([
+        apiAdminUpdateConfigItem('landing', 'heroTitle', { labelAr: landingForm.heroTitle }),
+        apiAdminUpdateConfigItem('landing', 'heroSubtitle', { labelAr: landingForm.heroSubtitle }),
+        apiAdminUpdateConfigItem('landing', 'apkUrl', { labelAr: landingForm.apkUrl }),
+        apiAdminUpdateConfigItem('landing', 'contactPhone', { labelAr: landingForm.contactPhone }),
+        apiAdminUpdateConfigItem('landing', 'showStats', { isActive: landingForm.showStats }),
+      ])
+      alert('✅ تم حفظ إعدادات صفحة الهبوط بنجاح!')
+      loadConfig()
+    } catch (err: any) {
+      alert('❌ فشل حفظ الإعدادات: ' + (err?.message || 'حدث خطأ'))
+    } finally {
+      setSaveLandingLoading(false)
+    }
+  }
 
   const resetForm = () => { setFormKey(''); setFormLabel(''); setFormEmoji('🌱'); setFormImage(''); setFormSubcategory(''); setFormHidePlantingDate(false); setFormError(''); setEditingItem(null); setShowAddForm(false) }
 
@@ -1243,6 +1284,127 @@ export default function AdminDashboard() {
                 </table>
               </div>
               <Pagination page={farmersPage} total={farmersTotal} limit={20} onPage={setFarmersPage} />
+            </div>
+          )}
+
+          {/* ══ LANDING PAGE SETTINGS ════════════════════════════════════════ */}
+          {tab === 'landing' && (
+            <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,.06)', border: '1px solid #f1f5f9' }}>
+              <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 16, marginBottom: 20 }}>
+                <h2 style={{ fontWeight: 900, color: '#1e293b', fontSize: 18, margin: 0 }}>⚙️ إعدادات صفحة الهبوط</h2>
+                <p style={{ color: '#94a3b8', fontSize: 13, margin: '4px 0 0' }}>تعديل محتوى الصفحة الأولى للمنصة وتحديث روابط التحميل والإحصائيات مباشرة.</p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 640 }}>
+                {/* Hero Title */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 900, color: '#475569', marginBottom: 6 }}>عنوان صفحة الهبوط الرئيسي (Hero Title)</label>
+                  <input 
+                    type="text" 
+                    value={landingForm.heroTitle} 
+                    onChange={e => setLandingForm(prev => ({ ...prev, heroTitle: e.target.value }))}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0', fontSize: 14, fontWeight: 700, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                {/* Hero Subtitle */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 900, color: '#475569', marginBottom: 6 }}>الوصف أو العنوان الفرعي (Hero Subtitle)</label>
+                  <textarea 
+                    value={landingForm.heroSubtitle} 
+                    onChange={e => setLandingForm(prev => ({ ...prev, heroSubtitle: e.target.value }))}
+                    rows={4}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0', fontSize: 14, fontWeight: 700, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                  />
+                </div>
+
+                {/* APK Link */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 900, color: '#475569', marginBottom: 6 }}>رابط تحميل تطبيق الأندرويد (APK Download Link)</label>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <input 
+                      type="text" 
+                      value={landingForm.apkUrl} 
+                      onChange={e => setLandingForm(prev => ({ ...prev, apkUrl: e.target.value }))}
+                      placeholder="/apk/mantoudj-bladi.apk"
+                      style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0', fontSize: 14, fontWeight: 700, outline: 'none', boxSizing: 'border-box', direction: 'ltr', textAlign: 'right' }}
+                    />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '12px 20px', background: apkUploading ? '#94a3b8' : '#2D6A4F', color: 'white', borderRadius: 10, fontSize: 13, fontWeight: 900, cursor: apkUploading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                      {apkUploading ? '⏳ جارٍ الرفع...' : '📤 رفع ملف APK'}
+                      <input 
+                        type="file" 
+                        accept=".apk" 
+                        style={{ display: 'none' }} 
+                        disabled={apkUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setApkUploading(true)
+                          try {
+                            const url = await apiUploadApk(file)
+                            setLandingForm(prev => ({ ...prev, apkUrl: url }))
+                            alert('✅ تم رفع ملف APK بنجاح! الرابط متوفر الآن في الحقل.')
+                          } catch (err: any) {
+                            alert('❌ فشل رفع الملف: ' + (err?.message || 'حدث خطأ'))
+                          } finally {
+                            setApkUploading(false)
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <p style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>يمكنك استخدام رابط نسبي مثل <code>/apk/mantoudj-bladi.apk</code> أو رفع ملف <code>.apk</code> مباشرة ليتم توليد الرابط تلقائياً.</p>
+                </div>
+
+                {/* Contact Phone */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 900, color: '#475569', marginBottom: 6 }}>رقم هاتف الدعم الفني</label>
+                  <input 
+                    type="text" 
+                    value={landingForm.contactPhone} 
+                    onChange={e => setLandingForm(prev => ({ ...prev, contactPhone: e.target.value }))}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0', fontSize: 14, fontWeight: 700, outline: 'none', boxSizing: 'border-box', direction: 'ltr', textAlign: 'right' }}
+                  />
+                </div>
+
+                {/* Show Stats Switch */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0' }}>
+                  <input 
+                    type="checkbox" 
+                    id="showStatsSwitch"
+                    checked={landingForm.showStats} 
+                    onChange={e => setLandingForm(prev => ({ ...prev, showStats: e.target.checked }))}
+                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                  />
+                  <label htmlFor="showStatsSwitch" style={{ fontSize: 14, fontWeight: 900, color: '#475569', cursor: 'pointer' }}>إظهار بطاقات إحصائيات المنصة الحية</label>
+                </div>
+
+                {/* Submit button */}
+                <div style={{ marginTop: 10 }}>
+                  <button 
+                    onClick={handleSaveLandingConfig} 
+                    disabled={saveLandingLoading}
+                    style={{
+                      background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                      color: 'white',
+                      padding: '14px 28px',
+                      borderRadius: 12,
+                      fontSize: 14,
+                      fontWeight: 900,
+                      border: 'none',
+                      cursor: saveLandingLoading ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 12px rgba(22,163,74,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}
+                  >
+                    {saveLandingLoading ? <RefreshCw size={16} className="animate-spin" /> : '💾'}
+                    <span>{saveLandingLoading ? 'جاري حفظ التعديلات...' : 'حفظ التغييرات'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

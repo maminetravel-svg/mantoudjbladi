@@ -20,3 +20,11 @@ export async function apiUploadVideo(file: File): Promise<string> {
   const { url } = await uploadFile('/api/uploads/video', form)
   return url
 }
+
+export async function apiUploadApk(file: File): Promise<string> {
+  const form = new FormData()
+  form.append('apk', file)
+  const { url } = await uploadFile('/api/uploads/apk', form)
+  return url
+}
+

@@ -14,7 +14,7 @@
 
 html {
   direction: rtl;
-  font-family: 'Segoe UI', Tahoma, Arial, 'Helvetica Neue', sans-serif;
+  font-family: 'Cairo', 'Outfit', 'Segoe UI', Tahoma, sans-serif;
 }
 
 body {
@@ -29,7 +29,7 @@ body {
 
 /* Arabic text improvements */
 p, span, div, h1, h2, h3, h4, h5, h6, label, button, input, select, textarea {
-  font-family: 'Segoe UI', Tahoma, Arial, 'Helvetica Neue', sans-serif;
+  font-family: 'Cairo', 'Outfit', 'Segoe UI', Tahoma, sans-serif !important;
 }
 
 /* Smooth scrolling */
